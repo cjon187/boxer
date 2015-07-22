@@ -101,7 +101,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
        builder.setContentTitle(notificationTitle);
        builder.setSound(soundUri);
        builder.setContentText(notificationMessage);
-       builder.setSubText("Tap to view documentation about notifications.");
+       //builder.setSubText("Tap to view documentation about notifications.");
        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
        notificationManager.notify(1, builder.build());
     }
@@ -197,7 +197,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
                     String appendedValue = append(tValue, "Text: " + msg + "\n");
                     SharedPreferences.Editor sedt = sp.edit();
                     sedt.putString("textvalue",appendedValue).commit();
-                    Notify("Something New From Dispatch", msg);
+                    Notify("Foodee", msg);
                 }
             });
         }
@@ -217,6 +217,10 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
         super.onResume();
         try{
             client.close();
+        }
+        catch (Exception e){
+            Log.d("error","tried to close");
+        }
             try {
                 MemoryPersistence persistence = new MemoryPersistence();
                 client = new MqttClient("tcp://skyynet.ca:1883", username, persistence);
@@ -226,10 +230,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             } catch (MqttException e) {
                 e.printStackTrace();
             }
-        }
-        catch (Exception e){
 
-        }
     }
 
 
@@ -264,6 +265,13 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             } catch (MqttException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    protected void onDestroy(){
+        super.onDestroy();
+        {
+            
         }
     }
     public void gps()
