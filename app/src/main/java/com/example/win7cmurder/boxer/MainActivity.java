@@ -318,6 +318,11 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             return sb.toString();
         }
 
+        public void drops(View view)
+        {
+            Intent myIntent = new Intent(MainActivity.this, drops.class);
+            MainActivity.this.startActivity(myIntent);
+        }
 
 
 }

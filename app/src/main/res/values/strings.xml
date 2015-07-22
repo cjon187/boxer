@@ -2,5 +2,8 @@
     <string name="app_name">boxer</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_notice">notice</string>
+    <string name="title_activity_drops">drops</string>
+
+    <string name="hello_world">Hello world!</string>
 
 </resources>
