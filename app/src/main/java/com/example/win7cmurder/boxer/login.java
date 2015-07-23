@@ -93,7 +93,7 @@ TextView txtPassword,txtUsername;
         String responseBody = "";
         String jon[]=new String[2];
         protected void onPreExecute() {
-            progressDialog.setMessage("Download data...");
+            progressDialog.setMessage("Authenticating data...");
             progressDialog.show();
             progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                 @Override

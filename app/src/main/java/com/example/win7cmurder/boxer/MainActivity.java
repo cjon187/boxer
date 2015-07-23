@@ -6,8 +6,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.location.Criteria;
@@ -15,7 +17,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
@@ -33,6 +37,7 @@ import android.widget.Toast;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
@@ -48,15 +53,45 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     String mqttid=generateid(15);
     String username;
     double lat,lon;
+    BroadcastReceiver mConnReceiver;
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
 
      protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //mqtt connect
 
-         editText = (EditText) findViewById(R.id.editText);
+        /*registerReceiver(
+                new networkChecker(),
+                new IntentFilter(
+                        ConnectivityManager.CONNECTIVITY_ACTION));*/
+        //network listener
+        mConnReceiver = new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                boolean noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
+
+                if (noConnectivity == true)
+                {
+                    Log.d("info", "No internet connection");
+                    //checkservice();
+
+
+                }
+                else
+                {
+                    Log.d("info", "Interet connection is UP");
+                    new connect().execute();
+
+                }
+            }
+        };
+        registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+
+
+        editText = (EditText) findViewById(R.id.editText);
          txview = (TextView) findViewById(R.id.textView);
          txview.setMovementMethod(new ScrollingMovementMethod());
 
@@ -64,25 +99,17 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
         String tValue = sp.getString("textvalue", "");
         username=sp.getString("login","");
         txview.setText(tValue);
-        //if (null==client) {
-            try {
-                MemoryPersistence persistence = new MemoryPersistence();
-                client = new MqttClient("tcp://skyynet.ca:1883", username, persistence);
-                client.connect();
-                client.setCallback(this);
-                client.subscribe(username, 1);
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        //}
-        LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
+
+        LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500,
                 0, mLocationListener);
-
-
-        Log.d("from first", username);
-
+        if (client==null) {
+            new connect().execute("");
+        }
+        else{
+            Log.d("dont need to starts","");
+        }
 
     }
     //notification
@@ -159,15 +186,10 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     }
     public void send (View view){
         String msg=editText.getText().toString();
-        try {
-            MqttMessage message = new MqttMessage();
-            message.setPayload(msg
-                    .getBytes());
-            client.publish("admin", message);
-            //client.close();
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if(client==null){
+           new connect().execute();
         }
+        new send().execute(msg);
     }
 
     @Override
@@ -205,7 +227,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
+        Log.d("messaged delievers","");
     }
     protected String append(String existing_contact, String new_contact) {
         String latestfavContacts = existing_contact + new_contact ;
@@ -214,23 +236,17 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     //handle activity states
     protected void onResume()
     {
-        super.onResume();
-        try{
-            client.close();
-        }
-        catch (Exception e){
-            Log.d("error","tried to close");
-        }
+       super.onResume();
+        {
+            new connect().execute("");
             try {
-                MemoryPersistence persistence = new MemoryPersistence();
-                client = new MqttClient("tcp://skyynet.ca:1883", username, persistence);
-                client.connect();
-                client.setCallback(this);
-                client.subscribe(username, 1);
-            } catch (MqttException e) {
-                e.printStackTrace();
+                registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
             }
-
+            catch(Exception e)
+            {
+                Log.d("cannot register","");
+            }
+        }
     }
 
 
@@ -238,17 +254,20 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     {
         super.onRestart();
         {
-            try {
-                client.close();
-                client2.close();
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
+
             SharedPreferences sp = getSharedPreferences("key", 0);
             String tValue = sp.getString("textvalue", "");
             SharedPreferences.Editor sedt = sp.edit();
             sedt.putString("textvalue", txview.getText().toString());
             txview.setText(tValue);
+            try {
+                registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+            }
+            catch(Exception e)
+            {
+                Log.d("cannot register","");
+            }
+            new connect().execute("");
         }
     }
 
@@ -259,12 +278,8 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             SharedPreferences.Editor sedt = sp.edit();
             sedt.putString("textvalue", txview.getText().toString());
             sedt.commit();
-            try {
-                client.close();
-                client2.close();
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
+            unregisterReceiver(mConnReceiver);
+
         }
     }
 
@@ -292,18 +307,19 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             MemoryPersistence persistence1 = new MemoryPersistence();
             client2 = new MqttClient("tcp://skyynet.ca:1883", generateid(15), persistence1);
             client2.connect();
-            client2.setCallback(this);
-            //client2.subscribe("admin");
-            String link="<a href=\"https://www.google.ca/maps/place/@"+latlon+",17z/data=!3m1!4b1!4m2!3m1!1s0x0:0x0\" target=\"_blank\">map</a>";
+            //client2.setCallback(this);
+            String link = "<a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>";
             MqttMessage message2 = new MqttMessage();
             message2.setPayload(link
                     .getBytes());
             client2.publish("admin", message2);
-            client2.close();
+
+
         }
 
         catch (Exception e){
             e.printStackTrace();
+            Log.d("sending msg error","");
         }
 
 
@@ -323,6 +339,74 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             Intent myIntent = new Intent(MainActivity.this, drops.class);
             MainActivity.this.startActivity(myIntent);
         }
+////////connect to mqtt broker
+    private class connect extends AsyncTask<String, Void, String> {
 
+        @Override
+        protected String doInBackground(String... params) {
+            try {
+                MemoryPersistence persistence = new MemoryPersistence();
+                client = new MqttClient("tcp://skyynet.ca:1883", username, persistence);
+                MqttConnectOptions connOpts = new MqttConnectOptions();
+                connOpts.setCleanSession(false);
+                connOpts.setKeepAliveInterval(60);
+                client.connect(connOpts);
+                client.setCallback(MainActivity.this);
+                client.subscribe(username, 1);
+                Log.d("connnetc worked","");
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+        }
+
+        @Override
+        protected void onPreExecute() {}
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
+    ////////////////send message
+    private class send extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... arg0) {
+            String msg=arg0[0];
+            try {
+                new connect().execute();
+                MqttMessage message = new MqttMessage();
+                message.setPayload(msg
+                        .getBytes());
+                client.publish("admin", message);
+
+                //client.close();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+            return msg;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            Log.d("sent",result);
+            editText.setText("");
+        }
+
+        @Override
+        protected void onPreExecute() {}
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
+    //////////////check for nectwork connection
 
 }
+
+
+
+
