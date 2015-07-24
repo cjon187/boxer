@@ -25,11 +25,13 @@ import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
+import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,11 +57,12 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     double lat,lon;
     BroadcastReceiver mConnReceiver;
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    @Override
 
-     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    @Override
+     protected void onCreate(Bundle icicle) {
+        super.onCreate(icicle);
         setContentView(R.layout.activity_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         /*registerReceiver(
                 new networkChecker(),
@@ -353,7 +356,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
                 client.connect(connOpts);
                 client.setCallback(MainActivity.this);
                 client.subscribe(username, 1);
-                Log.d("connnetc worked","");
+                Log.d("connnetc worked", "");
             } catch (MqttException e) {
                 e.printStackTrace();
             }
