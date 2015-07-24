@@ -280,7 +280,7 @@ public class drops extends ActionBarActivity implements MqttCallback{
             String latlon=Double.toString(lat)+","+Double.toString(lon);
 
             MemoryPersistence persistence1 = new MemoryPersistence();
-            client2 = new MqttClient("tcp://skyynet.ca:1883", generateid(15), persistence1);
+            client2 = new MqttClient("tcp://104.236.159.6:1883", generateid(15), persistence1);
             client2.connect();
             //client2.setCallback(this);
             String link = "<a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>";
