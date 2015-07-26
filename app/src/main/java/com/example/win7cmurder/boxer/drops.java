@@ -317,7 +317,7 @@ public class drops extends ActionBarActivity implements MqttCallback{
         protected String doInBackground(String... params) {
             try {
                 MemoryPersistence persistence = new MemoryPersistence();
-                client = new MqttClient("tcp://skyynet.ca:1883", username, persistence);
+                client = new MqttClient("tcp://104.236.159.6:1883", username, persistence);
                 MqttConnectOptions connOpts = new MqttConnectOptions();
                 connOpts.setCleanSession(false);
                 connOpts.setKeepAliveInterval(60);

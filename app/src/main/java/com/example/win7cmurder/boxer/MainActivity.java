@@ -5,9 +5,11 @@ import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -32,10 +34,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -44,6 +55,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
@@ -54,6 +69,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     TextView txview;
     String mqttid=generateid(15);
     String username;
+    Button send;
     double lat,lon;
     BroadcastReceiver mConnReceiver;
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -93,8 +109,8 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
         };
         registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
-
-        editText = (EditText) findViewById(R.id.editText);
+         send = (Button) findViewById(R.id.button);
+         editText = (EditText) findViewById(R.id.editText);
          txview = (TextView) findViewById(R.id.textView);
          txview.setMovementMethod(new ScrollingMovementMethod());
 
@@ -205,7 +221,10 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     @Override
     public void messageArrived(String s, MqttMessage message) throws Exception {
         final String msg = message.toString();
-        if (msg.equals("gps"))
+        String[] separated = msg.split("~");
+        final String realmsg=separated[0]; // this will contain "Fruit"
+        String time = separated[1]; // this will contain " they taste good"
+        if (realmsg.equals("gps"))
         {
             gps();
         }
@@ -215,7 +234,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             h.post(new Runnable() {
                 @Override
                 public void run() {
-                    txview.append("Text: " + msg + "\n");
+                    txview.append("Text: " + realmsg + "\n");
 
                     SharedPreferences sp = getSharedPreferences("key", 0);
                     String tValue = sp.getString("textvalue", "");
@@ -308,7 +327,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             String latlon=Double.toString(lat)+","+Double.toString(lon);
 
             MemoryPersistence persistence1 = new MemoryPersistence();
-            client2 = new MqttClient("tcp://skyynet.ca:1883", generateid(15), persistence1);
+            client2 = new MqttClient("tcp://104.236.159.6:1883", generateid(15), persistence1);
             client2.connect();
             //client2.setCallback(this);
             String link = "<a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>";
@@ -317,6 +336,32 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
                     .getBytes());
             client2.publish("admin", message2);
 
+            //upload to db
+            // Create a new HttpClient and Post Header
+
+            Calendar cal = Calendar.getInstance();
+            String now = String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+            String append = "~"+String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
+
+            try {
+                // Add your data
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+                nameValuePairs.add(new BasicNameValuePair("message",link+append));
+                nameValuePairs.add(new BasicNameValuePair("sen", username));
+                nameValuePairs.add(new BasicNameValuePair("rec", "Dispatch"));
+                nameValuePairs.add(new BasicNameValuePair("sentTime",now ));
+                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+            }
 
         }
 
@@ -375,14 +420,20 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
     }
     ////////////////send message
     private class send extends AsyncTask<String, Void, String> {
+        private ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
 
         @Override
         protected String doInBackground(String... arg0) {
+            Calendar cal = Calendar.getInstance();
+            String now = String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+            String append = "~"+String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+
             String msg=arg0[0];
             try {
                 new connect().execute();
                 MqttMessage message = new MqttMessage();
-                message.setPayload(msg
+                String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+msg+append;
+                message.setPayload(temp
                         .getBytes());
                 client.publish("admin", message);
 
@@ -390,17 +441,57 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             } catch (MqttException e) {
                 e.printStackTrace();
             }
+
+            //insert into db
+            // Create a new HttpClient and Post Header
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
+
+            try {
+                // Add your data
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+                nameValuePairs.add(new BasicNameValuePair("message",msg+append));
+                nameValuePairs.add(new BasicNameValuePair("sen", username));
+                nameValuePairs.add(new BasicNameValuePair("rec", "Dispatch"));
+                nameValuePairs.add(new BasicNameValuePair("sentTime",now ));
+                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+            }
             return msg;
         }
 
         @Override
         protected void onPostExecute(String result) {
             Log.d("sent",result);
+            this.progressDialog.dismiss();
+            send.setAlpha(1);
+            send.setClickable(true);
+            editText.setEnabled(true);
             editText.setText("");
+
         }
 
         @Override
-        protected void onPreExecute() {}
+        protected void onPreExecute() {
+            send.setAlpha(.5f);
+            send.setClickable(false);
+            editText.setEnabled(false);
+            progressDialog.setMessage("Authenticating data...");
+            progressDialog.show();
+            progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface arg0) {
+                    send.this.cancel(true);
+                }
+            });
+        }
 
         @Override
         protected void onProgressUpdate(Void... values) {}

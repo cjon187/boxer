@@ -108,7 +108,7 @@ TextView txtPassword,txtUsername;
             String password=arg0[1];
 
             HttpClient httpclient = new DefaultHttpClient();
-            HttpPost httppost = new HttpPost("http://skyynet.ca/boxer/login.php");
+            HttpPost httppost = new HttpPost("http://104.236.159.6/boxer/login.php");
             // Add your data
             List< NameValuePair > nameValuePairs = new ArrayList<NameValuePair>(5);
             nameValuePairs.add(new BasicNameValuePair("u", username));
