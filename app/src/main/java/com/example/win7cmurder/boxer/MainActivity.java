@@ -235,7 +235,6 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
                 @Override
                 public void run() {
                     txview.append("Text: " + realmsg + "\n");
-
                     SharedPreferences sp = getSharedPreferences("key", 0);
                     String tValue = sp.getString("textvalue", "");
                     String appendedValue = append(tValue, "Text: " + msg + "\n");
@@ -317,20 +316,19 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, false);
         Location location = locationManager.getLastKnownLocation(bestProvider);
-        //Double lat,lon;
         try {
-            //lat = location.getLatitude();
-            //lon = location.getLongitude();
+            Calendar cal = Calendar.getInstance();
+            String now = String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+            String append = "~"+String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
             Log.d("GPS", lat + " " + lon);
-            //Toast.makeText(getApplicationContext(),lat.toString()+" "+lon.toString(),Toast.LENGTH_SHORT).show();
-            //String latlon = lat.toString() + "," + lon.toString();
+
             String latlon=Double.toString(lat)+","+Double.toString(lon);
 
             MemoryPersistence persistence1 = new MemoryPersistence();
             client2 = new MqttClient("tcp://104.236.159.6:1883", generateid(15), persistence1);
             client2.connect();
             //client2.setCallback(this);
-            String link = "<a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>";
+            String link = "<div class=\"ui-bar ui-bar-a ui-corner-all\"><a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>"+append;
             MqttMessage message2 = new MqttMessage();
             message2.setPayload(link
                     .getBytes());
@@ -339,9 +337,6 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             //upload to db
             // Create a new HttpClient and Post Header
 
-            Calendar cal = Calendar.getInstance();
-            String now = String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
-            String append = "~"+String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
             HttpClient httpclient = new DefaultHttpClient();
             HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
 
@@ -372,6 +367,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
 
 
     }//gps
+
         private static final String ALLOWED_CHARACTERS ="0123456789qwertyuiopasdfghjklzxcvbnm";
         public String generateid(final int sizeOfRandomString)
         {
@@ -432,7 +428,7 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             try {
                 new connect().execute();
                 MqttMessage message = new MqttMessage();
-                String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+msg+append;
+                String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+"<div class=\"ui-bar ui-bar-a ui-corner-all\">"+msg+"</div>"+append;
                 message.setPayload(temp
                         .getBytes());
                 client.publish("admin", message);

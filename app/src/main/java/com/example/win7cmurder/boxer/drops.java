@@ -1,6 +1,7 @@
 package com.example.win7cmurder.boxer;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -30,10 +31,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -42,16 +53,23 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
-public class drops extends ActionBarActivity implements MqttCallback{
+public class drops extends Activity implements MqttCallback,AdapterView.OnItemClickListener {
     MqttClient client;
     MqttClient client2;
-    String mqttid=generateid(15);
+    String mqttid = generateid(15);
     String username;
-    double lat,lon;
+    double lat, lon;
     BroadcastReceiver mConnReceiver;
+    ArrayList<Car> arrayCars;
+    ListView listViewCars;
+
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
 
@@ -64,22 +82,20 @@ public class drops extends ActionBarActivity implements MqttCallback{
                 new IntentFilter(
                         ConnectivityManager.CONNECTIVITY_ACTION));*/
         //network listener
-        mConnReceiver = new BroadcastReceiver()
-        {
+        pop();
+        //////
+
+        mConnReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent)
-            {
+            public void onReceive(Context context, Intent intent) {
                 boolean noConnectivity = intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false);
 
-                if (noConnectivity == true)
-                {
+                if (noConnectivity == true) {
                     Log.d("info", "No internet connection");
                     //checkservice();
 
 
-                }
-                else
-                {
+                } else {
                     Log.d("info", "Interet connection is UP");
                     new connect().execute();
 
@@ -88,29 +104,24 @@ public class drops extends ActionBarActivity implements MqttCallback{
         };
         registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
-
-
-
         SharedPreferences sp = getSharedPreferences("key", 0);
         String tValue = sp.getString("textvalue", "");
-        username=sp.getString("login","");
-
-
+        username = sp.getString("login", "");
 
         LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 500,
                 0, mLocationListener);
-        if (client==null) {
+        if (client == null) {
             new connect().execute("");
-        }
-        else{
-            Log.d("dont need to starts","");
+        } else {
+            Log.d("dont need to starts", "");
         }
 
     }
+
     //notification
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void Notify (String notificationTitle, String notificationMessage){
+    public void Notify(String notificationTitle, String notificationMessage) {
         Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.notification_template_icon_bg);
@@ -128,6 +139,7 @@ public class drops extends ActionBarActivity implements MqttCallback{
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         notificationManager.notify(1, builder.build());
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -155,8 +167,8 @@ public class drops extends ActionBarActivity implements MqttCallback{
         public void onLocationChanged(final Location location) {
             //your code here
             //Log.d("loc chages",location.getLatitude()+" "+location.getLongitude());
-            lat=location.getLatitude();
-            lon=location.getLongitude();
+            lat = location.getLatitude();
+            lon = location.getLongitude();
         }
 
         @Override
@@ -185,23 +197,22 @@ public class drops extends ActionBarActivity implements MqttCallback{
     @Override
     public void messageArrived(String s, MqttMessage message) throws Exception {
         final String msg = message.toString();
-        if (msg.equals("gps"))
-        {
+        String[] separated = msg.split("~");
+        final String realmsg = separated[0]; // this will contain "Fruit"
+        String time = separated[1]; // this will contain " they taste good"
+        if (realmsg.equals("gps")) {
             gps();
-        }
-        else {
+        } else {
             System.out.println(message);
             Handler h = new Handler(this.getMainLooper());
             h.post(new Runnable() {
                 @Override
                 public void run() {
-                    //txview.append("Text: " + msg + "\n");
-
                     SharedPreferences sp = getSharedPreferences("key", 0);
                     String tValue = sp.getString("textvalue", "");
                     String appendedValue = append(tValue, "Text: " + msg + "\n");
                     SharedPreferences.Editor sedt = sp.edit();
-                    sedt.putString("textvalue",appendedValue).commit();
+                    sedt.putString("textvalue", appendedValue).commit();
                     Notify("Foodee", msg);
                 }
             });
@@ -210,47 +221,41 @@ public class drops extends ActionBarActivity implements MqttCallback{
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-        Log.d("messaged delievers","");
+        Log.d("messaged delievers", "");
     }
+
     protected String append(String existing_contact, String new_contact) {
-        String latestfavContacts = existing_contact + new_contact ;
+        String latestfavContacts = existing_contact + new_contact;
         return latestfavContacts;
     }
+
     //handle activity states
-    protected void onResume()
-    {
+    protected void onResume() {
         super.onResume();
         {
             new connect().execute("");
             try {
                 registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-            }
-            catch(Exception e)
-            {
-                Log.d("cannot register","");
+            } catch (Exception e) {
+                Log.d("cannot register", "");
             }
         }
     }
 
 
-    protected void onRestart()
-    {
+    protected void onRestart() {
         super.onRestart();
         {
-
-
             try {
                 registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-            }
-            catch(Exception e)
-            {
-                Log.d("cannot register","");
+            } catch (Exception e) {
+                Log.d("cannot register", "");
             }
             new connect().execute("");
         }
     }
 
-    protected void onStop(){
+    protected void onStop() {
         super.onStop();
         {
             unregisterReceiver(mConnReceiver);
@@ -258,53 +263,74 @@ public class drops extends ActionBarActivity implements MqttCallback{
         }
     }
 
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
         {
 
         }
     }
-    public void gps()
-    {
+
+    public void gps() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         String bestProvider = locationManager.getBestProvider(criteria, false);
         Location location = locationManager.getLastKnownLocation(bestProvider);
-        //Double lat,lon;
         try {
-            //lat = location.getLatitude();
-            //lon = location.getLongitude();
+            Calendar cal = Calendar.getInstance();
+            String now = String.valueOf(cal.get(Calendar.HOUR)) + ":" + String.valueOf(cal.get(Calendar.MINUTE));
+            String append = "~" + String.valueOf(cal.get(Calendar.HOUR)) + ":" + String.valueOf(cal.get(Calendar.MINUTE));
             Log.d("GPS", lat + " " + lon);
-            //Toast.makeText(getApplicationContext(),lat.toString()+" "+lon.toString(),Toast.LENGTH_SHORT).show();
-            //String latlon = lat.toString() + "," + lon.toString();
-            String latlon=Double.toString(lat)+","+Double.toString(lon);
+
+            String latlon = Double.toString(lat) + "," + Double.toString(lon);
 
             MemoryPersistence persistence1 = new MemoryPersistence();
             client2 = new MqttClient("tcp://104.236.159.6:1883", generateid(15), persistence1);
             client2.connect();
             //client2.setCallback(this);
-            String link = "<a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>";
+            String link = "<div class=\"ui-bar ui-bar-a ui-corner-all\"><a href=\"https://www.google.com/maps/embed/v1/place?q=" + Double.toString(lat) + "%2C" + Double.toString(lon) + "&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">" + username + " map</a>" + append;
             MqttMessage message2 = new MqttMessage();
             message2.setPayload(link
                     .getBytes());
             client2.publish("admin", message2);
 
+            //upload to db
+            // Create a new HttpClient and Post Header
 
-        }
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
 
-        catch (Exception e){
+            try {
+                // Add your data
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+                nameValuePairs.add(new BasicNameValuePair("message", link + append));
+                nameValuePairs.add(new BasicNameValuePair("sen", username));
+                nameValuePairs.add(new BasicNameValuePair("rec", "Dispatch"));
+                nameValuePairs.add(new BasicNameValuePair("sentTime", now));
+                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+            }
+
+        } catch (Exception e) {
             e.printStackTrace();
-            Log.d("sending msg error","");
+            Log.d("sending msg error", "");
         }
 
 
     }//gps
-    private static final String ALLOWED_CHARACTERS ="0123456789qwertyuiopasdfghjklzxcvbnm";
-    public String generateid(final int sizeOfRandomString)
-    {
-        final Random random=new Random();
-        final StringBuilder sb=new StringBuilder(sizeOfRandomString);
-        for(int i=0;i<sizeOfRandomString;++i)
+
+    private static final String ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm";
+
+    public String generateid(final int sizeOfRandomString) {
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
             sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
         return sb.toString();
     }
@@ -324,7 +350,7 @@ public class drops extends ActionBarActivity implements MqttCallback{
                 client.connect(connOpts);
                 client.setCallback(drops.this);
                 client.subscribe(username, 1);
-                Log.d("connnetc worked","");
+                Log.d("connnetc worked", "");
             } catch (MqttException e) {
                 e.printStackTrace();
             }
@@ -337,17 +363,20 @@ public class drops extends ActionBarActivity implements MqttCallback{
         }
 
         @Override
-        protected void onPreExecute() {}
+        protected void onPreExecute() {
+        }
 
         @Override
-        protected void onProgressUpdate(Void... values) {}
+        protected void onProgressUpdate(Void... values) {
+        }
     }
+
     ////////////////send message
     private class send extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... arg0) {
-            String msg=arg0[0];
+            String msg = arg0[0];
             try {
                 new connect().execute();
                 MqttMessage message = new MqttMessage();
@@ -364,15 +393,56 @@ public class drops extends ActionBarActivity implements MqttCallback{
 
         @Override
         protected void onPostExecute(String result) {
-            Log.d("sent",result);
+            Log.d("sent", result);
         }
 
         @Override
-        protected void onPreExecute() {}
+        protected void onPreExecute() {
+        }
 
         @Override
-        protected void onProgressUpdate(Void... values) {}
+        protected void onProgressUpdate(Void... values) {
+        }
     }
-    //////////////check for nectwork connection
+
+    //////////////listview stuff
+    public void pop() {
+        arrayCars = new ArrayList<Car>();
+
+        //fill cars data
+        Car audi = new Car(R.drawable.abc_btn_borderless_material, "Audi A4", "Gray", 18000);
+        Car opel = new Car(R.drawable.abc_btn_radio_material, "Opel Insigna", "Black", 14000);
+        Car mercedes = new Car(R.drawable.abc_btn_switch_to_on_mtrl_00012, "mercedes CLS 320", "Black", 16000);
+        Car ferrari = new Car(R.drawable.abc_btn_radio_material, "Ferrari Enzo", "White", 93000);
+        Car fiesta = new Car(R.drawable.abc_btn_rating_star_on_mtrl_alpha, "Ford Fiesta", "Green", 18000);
+        Car porshe = new Car(R.drawable.abc_ic_voice_search_api_mtrl_alpha, "porshe_cayenne", "Dark Gray", 101000);
+        Car lambo = new Car(R.drawable.abc_btn_borderless_material, "Lamborghini gallardo", "orange", 100000);
+        Car hyundai = new Car(R.drawable.abc_btn_radio_material, "Hyundai i30", "blue", 20000);
+        Car honda = new Car(R.drawable.abc_btn_borderless_material, "Honda accord", "red", 19000);
+
+        arrayCars.add(audi);
+        arrayCars.add(opel);
+        arrayCars.add(mercedes);
+        arrayCars.add(ferrari);
+        arrayCars.add(fiesta);
+        arrayCars.add(porshe);
+        arrayCars.add(lambo);
+        arrayCars.add(hyundai);
+        arrayCars.add(honda);
+
+        // Get the ListView by Id and instantiate the adapter with
+        // cars data and then set it the ListView
+        listViewCars = (ListView) findViewById(R.id.list_cars);
+        ListCarsAdapter adapter = new ListCarsAdapter(this, arrayCars);
+        listViewCars.setAdapter(adapter);
+        // Set the onItemClickListener on the ListView to listen for items clicks
+        listViewCars.setOnItemClickListener(this);
+    }
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Car selectedCar = arrayCars.get(position);
+        Toast.makeText(this, "You've selected :\n Car Model : " + selectedCar.getModel() + "\n Car Color : "+ selectedCar.getColor(), Toast.LENGTH_SHORT).show();
+    }
+
 
 }
+
