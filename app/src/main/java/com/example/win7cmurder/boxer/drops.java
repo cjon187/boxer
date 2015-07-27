@@ -6,9 +6,11 @@ import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -23,6 +25,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
@@ -32,6 +35,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -52,7 +56,9 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -69,6 +75,13 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
     BroadcastReceiver mConnReceiver;
     ArrayList<Car> arrayCars;
     ListView listViewCars;
+    ListCarsAdapter adapter;
+
+    JSONParser jParser = new JSONParser();
+    JSONArray products = null;
+
+    EditText editText;
+    Button send;
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
@@ -77,14 +90,20 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drops);
 
+
+        send = (Button) findViewById(R.id.buttonSend);
+        editText = (EditText) findViewById(R.id.editSend);
         /*registerReceiver(
                 new networkChecker(),
                 new IntentFilter(
                         ConnectivityManager.CONNECTIVITY_ACTION));*/
-        //network listener
-        pop();
+
+
         //////
 
+
+
+        //network listener
         mConnReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -117,6 +136,9 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             Log.d("dont need to starts", "");
         }
 
+        arrayCars = new ArrayList<Car>();
+        new load().execute();
+
     }
 
     //notification
@@ -125,7 +147,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.drawable.notification_template_icon_bg);
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, drops.class);
 
         intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 
@@ -199,7 +221,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         final String msg = message.toString();
         String[] separated = msg.split("~");
         final String realmsg = separated[0]; // this will contain "Fruit"
-        String time = separated[1]; // this will contain " they taste good"
+        final String time = separated[1]; // this will contain " they taste good"
         if (realmsg.equals("gps")) {
             gps();
         } else {
@@ -214,8 +236,17 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
                     SharedPreferences.Editor sedt = sp.edit();
                     sedt.putString("textvalue", appendedValue).commit();
                     Notify("Foodee", msg);
+
+                    //add new thing to listview
+                    Car jon = new Car(R.mipmap.download, username, realmsg, time);
+                    arrayCars.add(jon);
+                    listViewCars.setAdapter(adapter);
+                    listViewCars.setSelection(adapter.getCount() - 1);
                 }
             });
+
+
+
         }
     }
 
@@ -242,7 +273,6 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         }
     }
 
-
     protected void onRestart() {
         super.onRestart();
         {
@@ -257,11 +287,13 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
 
     protected void onStop() {
         super.onStop();
-        {
+
             unregisterReceiver(mConnReceiver);
 
-        }
+
+
     }
+
 
     protected void onDestroy() {
         super.onDestroy();
@@ -371,16 +403,29 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         }
     }
 
+    public void send (View view){
+        String msg=editText.getText().toString();
+        if(client==null){
+            new connect().execute();
+        }
+        new send().execute(msg);
+    }
     ////////////////send message
     private class send extends AsyncTask<String, Void, String> {
-
+        private ProgressDialog progressDialog = new ProgressDialog(drops.this);
+        Calendar cal = Calendar.getInstance();
+        String now = String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
+        String append = "~"+String.valueOf(cal.get(Calendar.HOUR))+":"+String.valueOf(cal.get(Calendar.MINUTE));
         @Override
         protected String doInBackground(String... arg0) {
-            String msg = arg0[0];
+
+
+            String msg=arg0[0];
             try {
                 new connect().execute();
                 MqttMessage message = new MqttMessage();
-                message.setPayload(msg
+                String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+"<div class=\"ui-bar ui-bar-a ui-corner-all\">"+msg+"</div>"+append;
+                message.setPayload(temp
                         .getBytes());
                 client.publish("admin", message);
 
@@ -388,12 +433,129 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             } catch (MqttException e) {
                 e.printStackTrace();
             }
+
+            //insert into db
+            // Create a new HttpClient and Post Header
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
+
+            try {
+                // Add your data
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+                nameValuePairs.add(new BasicNameValuePair("message", msg + append));
+                nameValuePairs.add(new BasicNameValuePair("sen", username));
+                nameValuePairs.add(new BasicNameValuePair("rec", "Dispatch"));
+                nameValuePairs.add(new BasicNameValuePair("sentTime", now));
+                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+
+            } catch (ClientProtocolException e) {
+                // TODO Auto-generated catch block
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+            }
             return msg;
         }
 
         @Override
         protected void onPostExecute(String result) {
-            Log.d("sent", result);
+            Log.d("sent",result);
+            this.progressDialog.dismiss();
+            send.setAlpha(1);
+            send.setClickable(true);
+            editText.setEnabled(true);
+            editText.setText("");
+
+            //add new thing to listview
+            Car jon = new Car(R.mipmap.download, username,result ,now);
+            arrayCars.add(jon);
+            listViewCars.setAdapter(adapter);
+            listViewCars.setSelection(adapter.getCount() - 1);
+
+        }
+
+        @Override
+        protected void onPreExecute() {
+            send.setAlpha(.5f);
+            send.setClickable(false);
+            editText.setEnabled(false);
+            progressDialog.setMessage("Authenticating data...");
+            progressDialog.show();
+            /*progressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface arg0) {
+                    send.this.cancel(true);
+                }
+            });*/
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {}
+    }
+    ///////end of send message
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        Car selectedCar = arrayCars.get(position);
+        Toast.makeText(this, "You've selected :\n Car Model : " + selectedCar.getSender() + "\n Car Color : "+ selectedCar.getMessage(), Toast.LENGTH_SHORT).show();
+    }
+
+    public void add(View view){
+        //Car jon = new Car(R.drawable.abc_btn_borderless_material, "jon", "uuuuuuuuuuuuuuuuuuuu", "12121");
+        //arrayCars.add(jon);
+        //listViewCars.setAdapter(adapter);
+        arrayCars = new ArrayList<Car>();
+        new load().execute();
+
+
+     }
+    //////load the listlive from db
+    private class load extends AsyncTask<String, Void, String>{
+
+        @Override
+        protected String doInBackground(String... arg0) {
+
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("u", username));
+            JSONObject json = jParser.makeHttpRequest("http://104.236.159.6/boxer/showMessages.php", "GET", params);
+
+            try {
+                products = json.getJSONArray("products");
+
+                for (int i = 0; i < products.length(); i++) {
+                    JSONObject c = products.getJSONObject(i);
+
+                    // Storing each json item in variable
+                    String id = c.getString("id");
+                    String sen = c.getString("sen");
+                    String rec = c.getString("rec");
+                    String msg = c.getString("message");
+                    String sendTime=c.getString("sendtime");
+
+                    Car jon = new Car(R.mipmap.download,sen , msg, sendTime);
+                    arrayCars.add(jon);
+                }
+
+
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            listViewCars = (ListView) findViewById(R.id.list_cars);
+            adapter=null;
+            adapter = new ListCarsAdapter(drops.this, arrayCars);
+            listViewCars.setAdapter(adapter);
+            // Set the onItemClickListener on the ListView to listen for items clicks
+            listViewCars.setOnItemClickListener(drops.this);
+            //scroll to bottom
+            listViewCars.setSelection(adapter.getCount() - 1);
+
         }
 
         @Override
@@ -403,44 +565,6 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         @Override
         protected void onProgressUpdate(Void... values) {
         }
-    }
-
-    //////////////listview stuff
-    public void pop() {
-        arrayCars = new ArrayList<Car>();
-
-        //fill cars data
-        Car audi = new Car(R.drawable.abc_btn_borderless_material, "Audi A4", "Gray", 18000);
-        Car opel = new Car(R.drawable.abc_btn_radio_material, "Opel Insigna", "Black", 14000);
-        Car mercedes = new Car(R.drawable.abc_btn_switch_to_on_mtrl_00012, "mercedes CLS 320", "Black", 16000);
-        Car ferrari = new Car(R.drawable.abc_btn_radio_material, "Ferrari Enzo", "White", 93000);
-        Car fiesta = new Car(R.drawable.abc_btn_rating_star_on_mtrl_alpha, "Ford Fiesta", "Green", 18000);
-        Car porshe = new Car(R.drawable.abc_ic_voice_search_api_mtrl_alpha, "porshe_cayenne", "Dark Gray", 101000);
-        Car lambo = new Car(R.drawable.abc_btn_borderless_material, "Lamborghini gallardo", "orange", 100000);
-        Car hyundai = new Car(R.drawable.abc_btn_radio_material, "Hyundai i30", "blue", 20000);
-        Car honda = new Car(R.drawable.abc_btn_borderless_material, "Honda accord", "red", 19000);
-
-        arrayCars.add(audi);
-        arrayCars.add(opel);
-        arrayCars.add(mercedes);
-        arrayCars.add(ferrari);
-        arrayCars.add(fiesta);
-        arrayCars.add(porshe);
-        arrayCars.add(lambo);
-        arrayCars.add(hyundai);
-        arrayCars.add(honda);
-
-        // Get the ListView by Id and instantiate the adapter with
-        // cars data and then set it the ListView
-        listViewCars = (ListView) findViewById(R.id.list_cars);
-        ListCarsAdapter adapter = new ListCarsAdapter(this, arrayCars);
-        listViewCars.setAdapter(adapter);
-        // Set the onItemClickListener on the ListView to listen for items clicks
-        listViewCars.setOnItemClickListener(this);
-    }
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Car selectedCar = arrayCars.get(position);
-        Toast.makeText(this, "You've selected :\n Car Model : " + selectedCar.getModel() + "\n Car Color : "+ selectedCar.getColor(), Toast.LENGTH_SHORT).show();
     }
 
 

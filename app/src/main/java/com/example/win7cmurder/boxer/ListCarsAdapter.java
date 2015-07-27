@@ -46,12 +46,12 @@ public class ListCarsAdapter extends BaseAdapter {
             convertView = this.inflater.inflate(R.layout.layout_list_item,
                     parent, false);
 
-            holder.txtModel = (TextView) convertView
-                    .findViewById(R.id.txt_car_model);
-            holder.txtColor = (TextView) convertView
-                    .findViewById(R.id.txt_car_color);
-            holder.txtPrice = (TextView) convertView
-                    .findViewById(R.id.txt_car_price);
+            holder.sender = (TextView) convertView
+                    .findViewById(R.id.sender);
+            holder.message = (TextView) convertView
+                    .findViewById(R.id.message);
+            holder.time = (TextView) convertView
+                    .findViewById(R.id.time);
             holder.imgCar = (ImageView) convertView.findViewById(R.id.img_car);
 
             convertView.setTag(holder);
@@ -60,18 +60,18 @@ public class ListCarsAdapter extends BaseAdapter {
         }
 
         Car car = listCars.get(position);
-        holder.txtModel.setText(car.getModel());
-        holder.txtColor.setText(car.getColor());
-        holder.txtPrice.setText(car.getPrice() + " €");
+        holder.sender.setText(car.getSender());
+        holder.message.setText(car.getMessage());
+        holder.time.setText(car.getTime());
         holder.imgCar.setImageResource(car.getDrawableId());
 
         return convertView;
     }
 
     private class ViewHolder {
-        TextView txtModel;
-        TextView txtColor;
-        TextView txtPrice;
+        TextView sender;
+        TextView message;
+        TextView time;
         ImageView imgCar;
     }
 

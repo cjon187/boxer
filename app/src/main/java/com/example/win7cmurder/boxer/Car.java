@@ -6,40 +6,40 @@ package com.example.win7cmurder.boxer;
 public class Car {
 
     private int drawableId;
-    private String model;
-    private String color;
-    private double price;
+    private String sender;
+    private String message;
+    private String time;
 
-    public Car(int drawableId, String model, String color, double price) {
+    public Car(int drawableId, String sender, String message, String time) {
         super();
         this.drawableId = drawableId;
-        this.model = model;
-        this.color = color;
-        this.price = price;
+        this.sender = sender;
+        this.message = message;
+        this.time= time;
     }
 
-    public void setModel(String model) {
-        this.model = model;
+    public void setSender(String sender) {
+        this.sender = sender;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    public void setPrice(float price) {
-        this.price = price;
+    public void setTime(String time) {
+        this.time = time;
     }
 
-    public String getModel() {
-        return model;
+    public String getSender() {
+        return sender;
     }
 
-    public String getColor() {
-        return color;
+    public String getMessage() {
+        return message;
     }
 
-    public double getPrice() {
-        return price;
+    public String getTime() {
+        return time;
     }
 
     public int getDrawableId() {

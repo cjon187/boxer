@@ -40,7 +40,7 @@ TextView txtPassword,txtUsername;
         SharedPreferences sp = getSharedPreferences("key", 0);
         String tValue = sp.getString("login", "");
         if (!tValue.equals("")){
-            Intent myIntent = new Intent(login.this, MainActivity.class);
+            Intent myIntent = new Intent(login.this, drops.class);
             login.this.startActivity(myIntent);
             finish();
         }
@@ -148,7 +148,7 @@ TextView txtPassword,txtUsername;
                     SharedPreferences.Editor sedt = sp.edit();
                     sedt.putString("login",username);
                     sedt.commit();
-                    Intent myIntent = new Intent(login.this, MainActivity.class);
+                    Intent myIntent = new Intent(login.this, drops.class);
                     login.this.startActivity(myIntent);
                     finish();
                 }

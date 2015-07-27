@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp" >
+    android:padding="8dp"
+    android:background="#81877A">
 
     <ImageView
         android:id="@+id/img_car"
@@ -13,13 +14,16 @@
         android:layout_marginRight="15dp"
         android:layout_marginTop="5dp"
         android:contentDescription="@null"
-        android:gravity="center_vertical" />
+        android:gravity="center_vertical"
+        android:src="@mipmap/download" />
 
     <RelativeLayout
         android:id="@+id/layout_item_car"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1" >
+        android:layout_weight="1"
+        android:background="@drawable/layout_bg">
+        <!--android:background="#81877A">-->
 
         <LinearLayout
             android:id="@+id/layout_car_model"
@@ -29,16 +33,7 @@
             android:orientation="horizontal" >
 
             <TextView
-                android:id="@+id/lbl_car_model"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="1"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txt_car_model"
+                android:id="@+id/sender"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
@@ -54,16 +49,7 @@
             android:orientation="horizontal" >
 
             <TextView
-                android:id="@+id/lbl_car_color"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="2"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txt_car_color"
+                android:id="@+id/message"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
@@ -79,16 +65,7 @@
             android:orientation="horizontal" >
 
             <TextView
-                android:id="@+id/lbl_car_price"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="3"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txt_car_price"
+                android:id="@+id/time"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="2"
