@@ -264,6 +264,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
     protected void onResume() {
         super.onResume();
         {
+            new load().execute();
             new connect().execute("");
             try {
                 registerReceiver(mConnReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
@@ -281,7 +282,9 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             } catch (Exception e) {
                 Log.d("cannot register", "");
             }
+            new load().execute();
             new connect().execute("");
+
         }
     }
 
