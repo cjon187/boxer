@@ -1,6 +1,7 @@
 package com.example.win7cmurder.boxer;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,13 +39,21 @@ public class ListCarsAdapter extends BaseAdapter {
         return listCars.get(position).getDrawableId();
     }
 
+
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
+        Car car = listCars.get(position);
         if (convertView == null) {
-
             holder = new ViewHolder();
-            convertView = this.inflater.inflate(R.layout.layout_list_item,
-                    parent, false);
+
+            if(car.getSide().equals("left")){
+                convertView = this.inflater.inflate(R.layout.layout_list_item2,
+                        parent, false);
+            }
+            if (car.getSide().equals("right")){
+                convertView = this.inflater.inflate(R.layout.layout_list_item,
+                        parent, false);
+            }
 
             holder.sender = (TextView) convertView
                     .findViewById(R.id.sender);
@@ -59,11 +68,13 @@ public class ListCarsAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        Car car = listCars.get(position);
+
         holder.sender.setText(car.getSender());
         holder.message.setText(car.getMessage());
         holder.time.setText(car.getTime());
         holder.imgCar.setImageResource(car.getDrawableId());
+
+
 
         return convertView;
     }

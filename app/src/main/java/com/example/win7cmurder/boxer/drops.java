@@ -230,15 +230,12 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             h.post(new Runnable() {
                 @Override
                 public void run() {
-                    SharedPreferences sp = getSharedPreferences("key", 0);
-                    String tValue = sp.getString("textvalue", "");
-                    String appendedValue = append(tValue, "Text: " + msg + "\n");
-                    SharedPreferences.Editor sedt = sp.edit();
-                    sedt.putString("textvalue", appendedValue).commit();
                     Notify("Foodee", msg);
-
                     //add new thing to listview
-                    Car jon = new Car(R.mipmap.download, username, realmsg, time);
+
+                    String side="";
+
+                    Car jon = new Car(R.mipmap.download, username, realmsg, time,"right");
                     arrayCars.add(jon);
                     listViewCars.setAdapter(adapter);
                     listViewCars.setSelection(adapter.getCount() - 1);
@@ -464,16 +461,25 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
 
         @Override
         protected void onPostExecute(String result) {
-            Log.d("sent",result);
+            Log.d("sent", result);
             this.progressDialog.dismiss();
             send.setAlpha(1);
             send.setClickable(true);
             editText.setEnabled(true);
             editText.setText("");
-
+            String side="";
             //add new thing to listview
-            Car jon = new Car(R.mipmap.download, username,result ,now);
+            if(username.equals("Dispatch")){
+                side="right";
+            }
+            else{
+                side="left";
+            }
+
+            Car jon = new Car(R.mipmap.download, username,result ,now, side);
             arrayCars.add(jon);
+            adapter=null;
+            adapter = new ListCarsAdapter(drops.this, arrayCars);
             listViewCars.setAdapter(adapter);
             listViewCars.setSelection(adapter.getCount() - 1);
 
@@ -535,7 +541,14 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
                     String msg = c.getString("message");
                     String sendTime=c.getString("sendtime");
 
-                    Car jon = new Car(R.mipmap.download,sen , msg, sendTime);
+                    String side="";
+                    if(sen.equals("Dispatch")){
+                        side="right";
+                    }
+                    else{
+                        side="left";
+                    }
+                    Car jon = new Car(R.mipmap.download,sen , msg, sendTime,side);
                     arrayCars.add(jon);
                 }
 
