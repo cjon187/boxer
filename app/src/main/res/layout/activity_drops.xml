@@ -42,7 +42,8 @@
         android:text="New Button"
         android:id="@+id/button7"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:onClick="goManifest" />
 
     <EditText
         android:layout_width="wrap_content"

@@ -330,9 +330,8 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
             //client2.setCallback(this);
             String link = "<div class=\"ui-bar ui-bar-a ui-corner-all\"><a href=\"https://www.google.com/maps/embed/v1/place?q="+Double.toString(lat)+"%2C"+Double.toString(lon)+"&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">"+username+" map</a>"+append;
             MqttMessage message2 = new MqttMessage();
-            message2.setPayload(link
-                    .getBytes());
-            client2.publish("admin", message2);
+            message2.setPayload(link.getBytes());
+            client2.publish("admin/"+username, message2);
 
             //upload to db
             // Create a new HttpClient and Post Header
@@ -429,9 +428,8 @@ public class MainActivity extends ActionBarActivity implements MqttCallback{
                 new connect().execute();
                 MqttMessage message = new MqttMessage();
                 String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+"<div class=\"ui-bar ui-bar-a ui-corner-all\">"+msg+"</div>"+append;
-                message.setPayload(temp
-                        .getBytes());
-                client.publish("admin", message);
+                message.setPayload(temp.getBytes());
+                client.publish("jon", message);
 
                 //client.close();
             } catch (MqttException e) {

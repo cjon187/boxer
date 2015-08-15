@@ -323,7 +323,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             MqttMessage message2 = new MqttMessage();
             message2.setPayload(link
                     .getBytes());
-            client2.publish("admin", message2);
+            client2.publish("admin/"+username, message2);
 
             //upload to db
             // Create a new HttpClient and Post Header
@@ -427,7 +427,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
                 String temp="<r>"+username+"</r>-><b>Dispatch: </b>"+"<div class=\"ui-bar ui-bar-a ui-corner-all\">"+msg+"</div>"+append;
                 message.setPayload(temp
                         .getBytes());
-                client.publish("admin", message);
+                client.publish("admin/"+username, message);
 
                 //client.close();
             } catch (MqttException e) {
@@ -510,14 +510,14 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
     }
 
     public void add(View view){
-        //Car jon = new Car(R.drawable.abc_btn_borderless_material, "jon", "uuuuuuuuuuuuuuuuuuuu", "12121");
-        //arrayCars.add(jon);
-        //listViewCars.setAdapter(adapter);
         arrayCars = new ArrayList<Car>();
         new load().execute();
-
-
      }
+    
+    public void goManifest(View view){
+        Intent myIntent = new Intent(drops.this, showmanifest.class);
+        drops.this.startActivity(myIntent);
+    }
     //////load the listlive from db
     private class load extends AsyncTask<String, Void, String>{
 
