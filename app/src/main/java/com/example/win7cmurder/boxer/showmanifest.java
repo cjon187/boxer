@@ -27,6 +27,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,32 +92,28 @@ public class showmanifest extends ActionBarActivity {
             nameValuePairs.add(new BasicNameValuePair("p", ""));
             JSONObject json = jParser.makeHttpRequest("http://104.236.159.6/boxer/showManifest.php", "GET", nameValuePairs);
             try {
-                String a = json.getString("id");
-                Log.d("output",a );
+                products = json.getJSONArray("products");
+
                 for (int i = 0; i < products.length(); i++) {
                     JSONObject c = products.getJSONObject(i);
 
                     // Storing each json item in variable
-                    String id = c.getString("id");
-                    String sen = c.getString("sen");
-                    String rec = c.getString("rec");
-                    String msg = c.getString("message");
-                    String sendTime=c.getString("sendtime");
-
-
+                    String a = c.getString("id");
+                    String b = c.getString("number_of_people");
+                    Log.d("json",a+" "+b);
 
                 }
 
 
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-
+                }
+                catch (Exception ex){
+                    ex.printStackTrace();
+                }
 
 
-            return null;
+
+
+                return null;
 
         }
         protected void onPostExecute(Void v) {
