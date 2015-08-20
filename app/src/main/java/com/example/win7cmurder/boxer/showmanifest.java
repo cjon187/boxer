@@ -7,9 +7,11 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -36,6 +39,7 @@ public class showmanifest extends ActionBarActivity {
 
     JSONParser jParser = new JSONParser();
     JSONArray products = null;
+    String bigString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,16 +97,72 @@ public class showmanifest extends ActionBarActivity {
             JSONObject json = jParser.makeHttpRequest("http://104.236.159.6/boxer/showManifest.php", "GET", nameValuePairs);
             try {
                 products = json.getJSONArray("products");
-
+                bigString="";
                 for (int i = 0; i < products.length(); i++) {
                     JSONObject c = products.getJSONObject(i);
 
-                    // Storing each json item in variable
-                    String a = c.getString("id");
-                    String b = c.getString("number_of_people");
-                    Log.d("json",a+" "+b);
+                   /* for(int a = 0; a<c.names().length(); a++){
+                        Log.d("array", c.names().getString(a) + " value = " + c.get(c.names().getString(a)));
+                        bigString += c.names().getString(a).toString() + " = " + c.get(c.names().getString(a).toString()+"\r\n");
+                    }*/
 
+                    //Storing each json item in variable
+                    bigString += "id "+c.getString("id")+"\r\n";
+                    bigString += "number of people "+ c.getString("number_of_people")+"\r\n";
+                    bigString += "area id "+c.getString("area_id")+"\r\n";
+                    bigString += "timezone "+c.getString("timezone")+"\r\n";
+                    bigString += "restaurant notes "+c.getString("restaurant_notes")+"\r\n";
+                    bigString += "client notes "+c.getString("client_notes")+"\r\n";
+                    bigString += "courier notes "+c.getString("courier_notes")+"\r\n";
+                    bigString += "accounting notes "+c.getString("accounting_notes")+"\r\n";
+                    bigString += "internal notes "+c.getString("internal_notes")+"\r\n";
+                    bigString += "client reference number "+c.getString("client_reference_number")+"\r\n";
+
+                    bigString += "driver id "+c.getString("driver_id")+"\r\n";
+                    bigString += "driver email "+c.getString("driver_email")+"\r\n";
+                    bigString += "driver first name "+c.getString("driver_first_name")+"\r\n";
+                    bigString += "driver_last_name "+c.getString("driver_last_name")+"\r\n";
+                    bigString += "driver_phone_number "+c.getString("driver_phone_number")+"\r\n";
+
+                    bigString += "pickup_location_id "+c.getString("pickup_location_id")+"\r\n";
+                    bigString += "pickup_location_arrival_time "+c.getString("pickup_location_arrival_time")+"\r\n";
+                    bigString += "pickup_location_name "+c.getString("pickup_location_name")+"\r\n";
+                    bigString += "pickup_location_address_line_1 "+c.getString("pickup_location_address_line_1")+"\r\n";
+                    bigString += "pickup_location_address_line_2 "+c.getString("pickup_location_address_line_2")+"\r\n";
+                    bigString += "pickup_location_postal_code "+c.getString("pickup_location_postal_code")+"\r\n";
+                    bigString += "pickup_location_city "+c.getString("pickup_location_city")+"\r\n";
+                    bigString += "pickup_location_province "+c.getString("pickup_location_province")+"\r\n";
+                    bigString += "pickup_location_country "+c.getString("pickup_location_country")+"\r\n";
+                    bigString += "pickup_location_country "+c.getString("pickup_location_longitude")+"\r\n";
+                    bigString += "pickup_location_latitude "+c.getString("pickup_location_latitude")+"\r\n";
+
+                    bigString += "drop_off_location_id "+c.getString("drop_off_location_id")+"\r\n";
+                    bigString += "drop_off_location_arrival_time "+c.getString("drop_off_location_arrival_time")+"\r\n";
+                    bigString += "drop_off_location_name "+c.getString("drop_off_location_name")+"\r\n";
+                    bigString += "drop_off_location_address_line_1 "+c.getString("drop_off_location_address_line_1")+"\r\n";
+                    bigString += "drop_off_location_address_line_2 "+c.getString("drop_off_location_address_line_2")+"\r\n";
+                    bigString += "drop_off_location_postal_code "+c.getString("drop_off_location_postal_code")+"\r\n";
+                    bigString += "drop_off_location_city "+c.getString("drop_off_location_city")+"\r\n";
+                    bigString += "drop_off_location_province "+c.getString("drop_off_location_province")+"\r\n";
+                    bigString += "drop_off_location_country "+c.getString("drop_off_location_country")+"\r\n";
+                    bigString += "drop_off_location_longitude "+c.getString("drop_off_location_longitude")+"\r\n";
+                    bigString += "drop_off_location_latitude "+c.getString("drop_off_location_latitude")+"\r\n";
+                    bigString += "\r\n";
+                 }//for
+
+                List< NameValuePair > nameValuePairs1 = new ArrayList<NameValuePair>(5);
+                nameValuePairs1.add(new BasicNameValuePair("u",""));
+                nameValuePairs1.add(new BasicNameValuePair("p", ""));
+                JSONObject json1 = jParser.makeHttpRequest("http://104.236.159.6/boxer/showOrders.php", "GET", nameValuePairs1);
+                JSONArray products1 = json1.getJSONArray("products");
+                for (int i = 0; i < products1.length(); i++) {
+                    JSONObject c = products1.getJSONObject(i);
+                    bigString += c.getString("order_id")+"\r\n";
+                    bigString += c.getString("order_name")+"\r\n";
+                    bigString += c.getString("order_description")+"\r\n";
+                    bigString += c.getString("order_quantity")+"\r\n\r\n";
                 }
+
 
 
                 }
@@ -118,7 +178,9 @@ public class showmanifest extends ActionBarActivity {
         }
         protected void onPostExecute(Void v) {
 
-
+            TextView t = (TextView)findViewById(R.id.textView4);
+            t.setMovementMethod(new ScrollingMovementMethod());
+            t.setText(bigString);
             this.progressDialog.dismiss();
 
 
