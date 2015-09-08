@@ -89,12 +89,12 @@ public class showmanifest extends ActionBarActivity {
         protected Void doInBackground(String... params) {
 
             HttpClient httpclient = new DefaultHttpClient();
-            HttpPost httppost = new HttpPost("http://104.236.159.6/boxer/showManifest.php");
+            HttpPost httppost = new HttpPost("http://192.241.212.197/boxer/showManifest.php");
             // Add your data
             List< NameValuePair > nameValuePairs = new ArrayList<NameValuePair>(5);
             nameValuePairs.add(new BasicNameValuePair("u",""));
             nameValuePairs.add(new BasicNameValuePair("p", ""));
-            JSONObject json = jParser.makeHttpRequest("http://104.236.159.6/boxer/showManifest.php", "GET", nameValuePairs);
+            JSONObject json = jParser.makeHttpRequest("http://192.241.212.197/boxer/showManifest.php", "GET", nameValuePairs);
             try {
                 products = json.getJSONArray("products");
                 bigString="";
@@ -153,7 +153,7 @@ public class showmanifest extends ActionBarActivity {
                 List< NameValuePair > nameValuePairs1 = new ArrayList<NameValuePair>(5);
                 nameValuePairs1.add(new BasicNameValuePair("u",""));
                 nameValuePairs1.add(new BasicNameValuePair("p", ""));
-                JSONObject json1 = jParser.makeHttpRequest("http://104.236.159.6/boxer/showOrders.php", "GET", nameValuePairs1);
+                JSONObject json1 = jParser.makeHttpRequest("http://192.241.212.197/boxer/showOrders.php", "GET", nameValuePairs1);
                 JSONArray products1 = json1.getJSONArray("products");
                 for (int i = 0; i < products1.length(); i++) {
                     JSONObject c = products1.getJSONObject(i);

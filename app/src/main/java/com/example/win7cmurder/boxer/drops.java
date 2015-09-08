@@ -316,7 +316,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             String latlon = Double.toString(lat) + "," + Double.toString(lon);
 
             MemoryPersistence persistence1 = new MemoryPersistence();
-            client2 = new MqttClient("tcp://104.236.159.6:1883", generateid(15), persistence1);
+            client2 = new MqttClient("tcp://192.241.212.197:1883", generateid(15), persistence1);
             client2.connect();
             //client2.setCallback(this);
             String link = "<div class=\"ui-bar ui-bar-a ui-corner-all\"><a href=\"https://www.google.com/maps/embed/v1/place?q=" + Double.toString(lat) + "%2C" + Double.toString(lon) + "&key=AIzaSyDSS7De8hhOvvhx3djmHlpye2ht8_39y5s\" target=\"i\">" + username + " map</a>" + append;
@@ -329,7 +329,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             // Create a new HttpClient and Post Header
 
             HttpClient httpclient = new DefaultHttpClient();
-            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
+            HttpPost httppost = new HttpPost("http://192.241.212.197/webmq/chatinsert.php");
 
             try {
                 // Add your data
@@ -375,7 +375,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
         protected String doInBackground(String... params) {
             try {
                 MemoryPersistence persistence = new MemoryPersistence();
-                client = new MqttClient("tcp://104.236.159.6:1883", username, persistence);
+                client = new MqttClient("tcp://192.241.212.197:1883", username, persistence);
                 MqttConnectOptions connOpts = new MqttConnectOptions();
                 connOpts.setCleanSession(false);
                 connOpts.setKeepAliveInterval(60);
@@ -437,7 +437,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
             //insert into db
             // Create a new HttpClient and Post Header
             HttpClient httpclient = new DefaultHttpClient();
-            HttpPost httppost = new HttpPost("http://104.236.159.6/webmq/chatinsert.php");
+            HttpPost httppost = new HttpPost("http://192.241.212.197/webmq/chatinsert.php");
 
             try {
                 // Add your data
@@ -515,7 +515,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
      }
 
     public void goManifest(View view){
-        Intent myIntent = new Intent(drops.this, showmanifest.class);
+        Intent myIntent = new Intent(drops.this, notice.class);
         drops.this.startActivity(myIntent);
     }
     //////load the listlive from db
@@ -526,7 +526,7 @@ public class drops extends Activity implements MqttCallback,AdapterView.OnItemCl
 
             List<NameValuePair> params = new ArrayList<NameValuePair>();
             params.add(new BasicNameValuePair("u", username));
-            JSONObject json = jParser.makeHttpRequest("http://104.236.159.6/boxer/showMessages.php", "GET", params);
+            JSONObject json = jParser.makeHttpRequest("http://192.241.212.197/boxer/showMessages.php", "GET", params);
 
             try {
                 products = json.getJSONArray("products");
